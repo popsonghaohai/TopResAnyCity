@@ -1,20 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { SearchBar } from './components/SearchBar';
 import { RestaurantCard } from './components/RestaurantCard';
 import { LoadingView } from './components/LoadingView';
 import { fetchTopRestaurants } from './services/geminiService';
-import { Restaurant, LoadingState, ThemeId } from './types';
+import { Restaurant, LoadingState, ThemeId, LanguageCode } from './types';
 import { themes } from './themes';
 
 function App() {
   const [loadingState, setLoadingState] = useState<LoadingState>(LoadingState.IDLE);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [cityImage, setCityImage] = useState<string>('');
   const [currentCity, setCurrentCity] = useState('');
   const [errorMsg, setErrorMsg] = useState<string>('');
   
   // Theme State
   const [currentThemeId, setCurrentThemeId] = useState<ThemeId>('modern');
   const theme = themes[currentThemeId];
+
+  // Language State
+  const [currentLanguage, setCurrentLanguage] = useState<LanguageCode>('en');
 
   // Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -39,17 +43,22 @@ function App() {
     }
   };
 
+  // Main Search Function
   const handleSearch = async (city: string) => {
+    if (!city) return;
+    
     setLoadingState(LoadingState.LOADING);
-    setRestaurants([]);
+    setRestaurants([]); 
+    setCityImage('');
     setErrorMsg('');
     setCurrentCity(city);
     // Close Favorites if open when searching
     setIsFavoritesOpen(false); 
 
     try {
-      const results = await fetchTopRestaurants(city);
+      const { restaurants: results, cityImageUrl } = await fetchTopRestaurants(city, currentLanguage);
       setRestaurants(results);
+      setCityImage(cityImageUrl);
       setLoadingState(LoadingState.SUCCESS);
     } catch (error) {
       setLoadingState(LoadingState.ERROR);
@@ -57,9 +66,26 @@ function App() {
     }
   };
 
+  // Effect: Reload search results when language changes (if we already have a city)
+  useEffect(() => {
+    if (currentCity && !isFavoritesOpen && loadingState !== LoadingState.LOADING) {
+       // Re-fetch with the new language
+       handleSearch(currentCity);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLanguage]);
+
   // Determine what to display based on whether favorites mode is active
   const displayedRestaurants = isFavoritesOpen ? favorites : restaurants;
   const isFavoritesEmpty = isFavoritesOpen && favorites.length === 0;
+
+  const languages: { code: LanguageCode; label: string }[] = [
+    { code: 'en', label: 'English' },
+    { code: 'zh', label: '中文 (Chinese)' },
+    { code: 'fr', label: 'Français (French)' },
+    { code: 'es', label: 'Español (Spanish)' },
+    { code: 'ja', label: '日本語 (Japanese)' },
+  ];
 
   return (
     <div className={`min-h-screen transition-colors duration-700 ${theme.font} ${theme.bg} selection:bg-stone-300 selection:text-black`}>
@@ -92,18 +118,54 @@ function App() {
         
         {/* Search Bar (Only show if not viewing favorites or if browsing) */}
         {!isFavoritesOpen && (
-          <div className="mb-10">
+          <div className="mb-8">
             <SearchBar 
               onSearch={handleSearch} 
               isLoading={loadingState === LoadingState.LOADING} 
-              // We can pass visual props if SearchBar supported them, keeping it simple for now
             />
+          </div>
+        )}
+
+        {/* City Image Banner (Real Image) */}
+        {loadingState === LoadingState.SUCCESS && !isFavoritesOpen && currentCity && restaurants.length > 0 && (
+          <div className={`relative w-full h-48 md:h-64 mb-10 rounded-xl overflow-hidden shadow-lg animate-fadeIn ${theme.cardBg}`}>
+            {cityImage ? (
+                <img 
+                  src={cityImage}
+                  alt={currentCity}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                      // Fallback if the real image link is broken
+                      e.currentTarget.style.display = 'none';
+                  }}
+                />
+            ) : null}
+            
+            {/* Fallback Gradient Background (Visible if no image or image error) */}
+            <div className={`absolute inset-0 -z-10 bg-gradient-to-br ${theme.gradient} to-gray-500`}></div>
+
+            {/* Overlay Text */}
+            <div className={`absolute inset-0 bg-gradient-to-t ${theme.gradient} to-transparent flex flex-col justify-end p-6`}>
+              <h2 className="text-white text-3xl md:text-4xl font-bold shadow-sm">Top 3 in {currentCity}</h2>
+              <p className="text-white/80 text-sm md:text-base mt-1">Curated by AI • Validated by Locals</p>
+            </div>
           </div>
         )}
 
         {/* Favorites Header */}
         {isFavoritesOpen && (
-          <div className="mb-8 text-center">
+          <div className="mb-8 text-center animate-fadeIn">
+             {/* Back Button */}
+             <button
+                onClick={() => setIsFavoritesOpen(false)}
+                className={`mb-6 inline-flex items-center px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase transition-all duration-300 border ${theme.border} ${theme.text} hover:bg-black/5 active:scale-95`}
+             >
+                <svg className="w-3 h-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Back to Search
+             </button>
+
              <h2 className={`text-3xl font-bold ${theme.text} mb-2`}>My Collection</h2>
              <p className={`text-sm opacity-60 ${theme.text}`}>Your saved culinary spots</p>
              {isFavoritesEmpty && (
@@ -123,7 +185,7 @@ function App() {
         {/* Results List */}
         <div className="flex-1">
           {displayedRestaurants.map((restaurant, index) => (
-             <div key={restaurant.id} className="relative animate-fadeIn" style={{animationDelay: `${index * 150}ms`}}>
+             <div key={restaurant.id} className="relative animate-fadeIn" style={{animationDelay: `${index * 100}ms`}}>
                 <RestaurantCard 
                    restaurant={restaurant}
                    rank={index + 1}
@@ -161,17 +223,34 @@ function App() {
       <div className="fixed bottom-6 left-6 z-50">
          {/* Settings Menu */}
          {isSettingsOpen && (
-           <div className={`absolute bottom-14 left-0 w-48 ${theme.cardBg} border ${theme.border} shadow-2xl rounded-xl overflow-hidden mb-2 animate-slideUp origin-bottom-left`}>
-              <div className={`px-4 py-3 border-b ${theme.border} text-xs font-bold uppercase tracking-wider ${theme.text} opacity-50`}>
-                Select Theme
+           <div className={`absolute bottom-14 left-0 w-56 ${theme.cardBg} border ${theme.border} shadow-2xl rounded-xl overflow-hidden mb-2 animate-slideUp origin-bottom-left max-h-96 overflow-y-auto`}>
+              
+              {/* Language Section */}
+              <div className={`px-4 py-3 border-b ${theme.border} text-xs font-bold uppercase tracking-wider ${theme.text} opacity-50 bg-gray-50/50`}>
+                Language
               </div>
-              <button onClick={() => { setCurrentThemeId('spring'); setIsSettingsOpen(false); }} className={`w-full text-left px-4 py-3 hover:bg-black/5 flex items-center ${theme.text}`}>
+              {languages.map(lang => (
+                <button 
+                  key={lang.code}
+                  onClick={() => { setCurrentLanguage(lang.code); }} 
+                  className={`w-full text-left px-4 py-2 hover:bg-black/5 flex items-center justify-between ${theme.text} ${currentLanguage === lang.code ? 'font-bold bg-black/5' : ''}`}
+                >
+                  {lang.label}
+                  {currentLanguage === lang.code && <span className={`text-xs ${theme.accent}`}>●</span>}
+                </button>
+              ))}
+
+              {/* Theme Section */}
+              <div className={`px-4 py-3 border-b ${theme.border} border-t ${theme.border} text-xs font-bold uppercase tracking-wider ${theme.text} opacity-50 bg-gray-50/50 mt-2`}>
+                Theme
+              </div>
+              <button onClick={() => { setCurrentThemeId('spring'); }} className={`w-full text-left px-4 py-3 hover:bg-black/5 flex items-center ${theme.text}`}>
                 <span className="w-3 h-3 rounded-full bg-emerald-400 mr-3"></span> Spring
               </button>
-              <button onClick={() => { setCurrentThemeId('ice'); setIsSettingsOpen(false); }} className={`w-full text-left px-4 py-3 hover:bg-black/5 flex items-center ${theme.text}`}>
+              <button onClick={() => { setCurrentThemeId('ice'); }} className={`w-full text-left px-4 py-3 hover:bg-black/5 flex items-center ${theme.text}`}>
                 <span className="w-3 h-3 rounded-full bg-cyan-400 mr-3"></span> Cool
               </button>
-              <button onClick={() => { setCurrentThemeId('modern'); setIsSettingsOpen(false); }} className={`w-full text-left px-4 py-3 hover:bg-black/5 flex items-center ${theme.text}`}>
+              <button onClick={() => { setCurrentThemeId('modern'); }} className={`w-full text-left px-4 py-3 hover:bg-black/5 flex items-center ${theme.text}`}>
                 <span className="w-3 h-3 rounded-full bg-stone-800 mr-3"></span> Modern
               </button>
            </div>

@@ -6,10 +6,15 @@ export interface Restaurant {
   address: string;
   phoneNumber: string;
   mapUrl: string; // Google Maps link
-  imageUrl: string; // URL for food/restaurant image
+  imageUrl?: string; // Optional URL for food/restaurant image
   rating: number; // 1-10 scale
   reviewSummary: string;
   tags: string[];
+}
+
+export interface CitySearchResult {
+  cityImageUrl: string;
+  restaurants: Restaurant[];
 }
 
 export interface SearchResult {
@@ -25,6 +30,7 @@ export enum LoadingState {
 }
 
 export type ThemeId = 'modern' | 'spring' | 'ice';
+export type LanguageCode = 'en' | 'zh' | 'fr' | 'es' | 'ja';
 
 export interface ThemeConfig {
   id: ThemeId;

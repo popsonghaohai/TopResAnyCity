@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { SearchBar } from './components/SearchBar';
 import { RestaurantCard } from './components/RestaurantCard';
 import { LoadingView } from './components/LoadingView';
+import { ApiKeysModal } from './components/ApiKeysModal';
+import { HelpModal } from './components/HelpModal';
 import { fetchTopRestaurants } from './services/geminiService';
 import { Restaurant, LoadingState, ThemeId, LanguageCode } from './types';
 import { themes } from './themes';
@@ -22,6 +24,8 @@ function App() {
 
   // Settings State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isApiKeysModalOpen, setIsApiKeysModalOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
   // Favorites State
   const [favorites, setFavorites] = useState<Restaurant[]>(() => {
@@ -219,11 +223,25 @@ function App() {
         <LoadingView city={currentCity} theme={theme} />
       )}
 
+      {/* ----------------- API Keys Modal ----------------- */}
+      <ApiKeysModal 
+        isOpen={isApiKeysModalOpen} 
+        onClose={() => setIsApiKeysModalOpen(false)} 
+        theme={theme} 
+      />
+
+      {/* ----------------- Help Modal ----------------- */}
+      <HelpModal 
+        isOpen={isHelpModalOpen} 
+        onClose={() => setIsHelpModalOpen(false)} 
+        theme={theme} 
+      />
+
       {/* ----------------- Bottom Left Settings ----------------- */}
       <div className="fixed bottom-6 left-6 z-50">
          {/* Settings Menu */}
          {isSettingsOpen && (
-           <div className={`absolute bottom-14 left-0 w-56 ${theme.cardBg} border ${theme.border} shadow-2xl rounded-xl overflow-hidden mb-2 animate-slideUp origin-bottom-left max-h-96 overflow-y-auto`}>
+           <div className={`absolute bottom-14 left-0 w-56 ${theme.cardBg} border ${theme.border} shadow-2xl rounded-xl overflow-hidden mb-2 animate-slideUp origin-bottom-left max-h-[80vh] overflow-y-auto`}>
               
               {/* Language Section */}
               <div className={`px-4 py-3 border-b ${theme.border} text-xs font-bold uppercase tracking-wider ${theme.text} opacity-50 bg-gray-50/50`}>
@@ -253,6 +271,26 @@ function App() {
               <button onClick={() => { setCurrentThemeId('modern'); }} className={`w-full text-left px-4 py-3 hover:bg-black/5 flex items-center ${theme.text}`}>
                 <span className="w-3 h-3 rounded-full bg-stone-800 mr-3"></span> Modern
               </button>
+
+              {/* API Keys Section */}
+              <div className={`px-4 py-3 border-b ${theme.border} border-t ${theme.border} text-xs font-bold uppercase tracking-wider ${theme.text} opacity-50 bg-gray-50/50 mt-2`}>
+                App Info
+              </div>
+              <button 
+                onClick={() => { setIsSettingsOpen(false); setIsApiKeysModalOpen(true); }} 
+                className={`w-full text-left px-4 py-3 hover:bg-black/5 flex items-center ${theme.text}`}
+              >
+                 <svg className="w-4 h-4 mr-3 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11.536 17.464a3 3 0 01-.879.586l-2 1a3 3 0 01-3.414-3.414l1-2a3 3 0 01.586-.879l2.743-2.743A6 6 0 0117 9z" /></svg>
+                 Configure Keys
+              </button>
+              <button 
+                onClick={() => { setIsSettingsOpen(false); setIsHelpModalOpen(true); }} 
+                className={`w-full text-left px-4 py-3 hover:bg-black/5 flex items-center ${theme.text}`}
+              >
+                 <svg className="w-4 h-4 mr-3 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                 Help & Guide
+              </button>
+
            </div>
          )}
 

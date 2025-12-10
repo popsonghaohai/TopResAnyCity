@@ -5,45 +5,45 @@ export const themes: Record<string, ThemeConfig> = {
     id: 'modern',
     name: 'Paris Chic',
     font: 'font-serif',
-    bg: 'bg-stone-50',
-    text: 'text-stone-900',
+    bg: 'bg-stone-100', // Slightly darker than pure white to let cards pop
+    text: 'text-black', // Maximum contrast
     cardBg: 'bg-white',
-    accent: 'text-gold-500',
-    button: 'bg-noir hover:bg-stone-800 shadow-md',
-    buttonText: 'text-white',
-    border: 'border-stone-200',
+    accent: 'text-amber-700', // Darker gold for better readability on white
+    button: 'bg-black hover:bg-stone-800 shadow-md',
+    buttonText: 'text-white font-bold',
+    border: 'border-stone-300', // Darker border
     highlight: 'bg-stone-100',
-    gradient: 'from-black/70',
-    overlay: 'bg-white/90 backdrop-blur-sm'
+    gradient: 'from-black/80', // Darker gradient
+    overlay: 'bg-white/95 backdrop-blur-sm'
   },
   spring: {
     id: 'spring',
     name: 'Fresh Spring',
     font: 'font-rounded',
-    bg: 'bg-[#fff5f5]', // Very light pink/white
-    text: 'text-emerald-900',
+    bg: 'bg-rose-50', 
+    text: 'text-teal-950', // Very dark teal, almost black
     cardBg: 'bg-white',
-    accent: 'text-rose-400',
-    button: 'bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-200',
-    buttonText: 'text-white',
-    border: 'border-rose-100',
+    accent: 'text-rose-600', // Darker rose for contrast
+    button: 'bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200',
+    buttonText: 'text-white font-extrabold',
+    border: 'border-rose-200',
     highlight: 'bg-emerald-50',
-    gradient: 'from-emerald-900/60',
-    overlay: 'bg-[#fff5f5]/90 backdrop-blur-md'
+    gradient: 'from-emerald-950/70',
+    overlay: 'bg-[#fff5f5]/95 backdrop-blur-md'
   },
   ice: {
     id: 'ice',
     name: 'Cyber Cool',
     font: 'font-mono',
-    bg: 'bg-slate-900',
-    text: 'text-cyan-50',
-    cardBg: 'bg-slate-800',
-    accent: 'text-cyan-400',
+    bg: 'bg-slate-950', // Darker background
+    text: 'text-white', // Pure white text
+    cardBg: 'bg-slate-900',
+    accent: 'text-cyan-300', // Bright cyan pops against dark
     button: 'bg-cyan-500 hover:bg-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.5)]',
-    buttonText: 'text-slate-900 font-bold',
-    border: 'border-slate-700',
-    highlight: 'bg-slate-700',
-    gradient: 'from-slate-900',
-    overlay: 'bg-slate-900/90 backdrop-blur-md'
+    buttonText: 'text-slate-950 font-black',
+    border: 'border-slate-600',
+    highlight: 'bg-slate-800',
+    gradient: 'from-black',
+    overlay: 'bg-slate-950/95 backdrop-blur-md'
   }
 };

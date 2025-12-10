@@ -5,14 +5,17 @@ const apiKey = process.env.API_KEY;
 
 // --- Helper Functions ---
 
-// Fetch image from free stock API providers (Pexels, Pixabay)
-const fetchCityImageFromMultipleSources = async (city: string): Promise<string | null> => {
+// Generic function to fetch images from free stock API providers
+const fetchImageFromApis = async (query: string, orientation: 'landscape' | 'portrait' | 'square' = 'landscape'): Promise<string | null> => {
   // 1. Pexels API
   try {
-    const pexelsApiKey = "EkRP5XY6lMJfnxU44vLqwTjcMLNmc4Kl1axhrua0bwydvp7on7s3boTi";
+    // Try localStorage first (user setting), then hardcoded fallback for demo
+    const userKey = localStorage.getItem('pexels_api_key');
+    const pexelsApiKey = userKey || "";
+    
     if (pexelsApiKey) {
       const response = await fetch(
-        `https://api.pexels.com/v1/search?query=${encodeURIComponent(city + ' city')}&per_page=1&orientation=landscape`,
+        `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1&orientation=${orientation}`,
         {
           headers: {
             'Authorization': pexelsApiKey
@@ -22,20 +25,23 @@ const fetchCityImageFromMultipleSources = async (city: string): Promise<string |
       if (response.ok) {
         const data = await response.json();
         if (data.photos && data.photos.length > 0) {
-          return data.photos[0].src.large;
+          // Prefer 'large' or 'medium' based on usage to save bandwidth, but 'large' is good for quality
+          return data.photos[0].src.large; 
         }
       }
     }
   } catch (error) {
-    console.warn('Pexels fetch failed, trying next source', error);
+    console.warn(`Pexels fetch failed for ${query}`, error);
   }
 
   // 2. Pixabay API
   try {
-    const pixabayApiKey = "53633877-8e9403988935b9b04a4fdc7b7";
+    const userKey = localStorage.getItem('pixabay_api_key');
+    const pixabayApiKey = userKey || "";
+    
     if (pixabayApiKey) {
       const response = await fetch(
-        `https://pixabay.com/api/?key=${pixabayApiKey}&q=${encodeURIComponent(city)}&image_type=photo&orientation=horizontal&per_page=3`
+        `https://pixabay.com/api/?key=${pixabayApiKey}&q=${encodeURIComponent(query)}&image_type=photo&orientation=horizontal&per_page=3`
       );
       if (response.ok) {
         const data = await response.json();
@@ -45,32 +51,45 @@ const fetchCityImageFromMultipleSources = async (city: string): Promise<string |
       }
     }
   } catch (error) {
-    console.warn('Pixabay fetch failed', error);
+    console.warn(`Pixabay fetch failed for ${query}`, error);
+  }
+
+  // 3. Wikimedia Commons (Fallback)
+  try {
+    const response = await fetch(
+      `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srnamespace=6&srlimit=1&format=json&origin=*`
+    );
+    const data = await response.json();
+    if (data.query && data.query.search && data.query.search.length > 0) {
+      const filename = data.query.search[0].title;
+      const imageResponse = await fetch(
+        `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(filename)}&prop=imageinfo&iiprop=url&format=json&origin=*`
+      );
+      const imageData = await imageResponse.json();
+      const pages = imageData.query.pages;
+      const pageId = Object.keys(pages)[0];
+      if (pages[pageId].imageinfo && pages[pageId].imageinfo[0]) {
+        return pages[pageId].imageinfo[0].url;
+      }
+    }
+  } catch (error) {
+    console.log(`Wikimedia fetch failed for ${query}`);
   }
 
   return null;
 };
 
-// Helper to clean Markdown JSON blocks and handle common LLM JSON errors
+// Helper to clean Markdown JSON blocks
 const cleanJsonOutput = (text: string): string => {
   let cleaned = text.trim();
-
-  // 1. Robustly extract the JSON object by finding the first '{' and last '}'
   const startIndex = cleaned.indexOf('{');
   const endIndex = cleaned.lastIndexOf('}');
-
   if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
     cleaned = cleaned.substring(startIndex, endIndex + 1);
-  } else {
-    // Fallback: simple markdown stripping
-    if (cleaned.startsWith('```')) {
-        cleaned = cleaned.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
-    }
+  } else if (cleaned.startsWith('```')) {
+     cleaned = cleaned.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
   }
-
-  // 2. Fix "Bad control character in string literal" error
   cleaned = cleaned.replace(/[\x00-\x1F]+/g, ' ');
-
   return cleaned;
 };
 
@@ -89,32 +108,19 @@ export const fetchTopRestaurants = async (city: string, language: LanguageCode =
     throw new Error("API Key is missing");
   }
 
-  // 1. Start fetching image from APIs immediately (Parallel execution)
-  const apiImagePromise = fetchCityImageFromMultipleSources(city);
+  // 1. Start fetching CITY image (Parallel execution)
+  const apiCityImagePromise = fetchImageFromApis(`${city} city landmark`, 'landscape');
 
   const ai = new GoogleGenAI({ apiKey });
   const targetLanguage = getLanguageName(language);
 
-  // We keep the prompt searching for an image as a FALLBACK in case APIs fail or keys are missing.
   const prompt = `
     I need you to act as a web browsing assistant and local guide.
 
-    TASK 1: FIND HIGH-QUALITY CITY IMAGE (Fallback)
-    1.  Perform a targeted Google Search for a high-resolution, landscape-oriented photograph of "${city}".
-    2.  You MUST strictly search within these specific free stock image domains using a query like: 
-        "${city} city landmark landscape wallpaper site:unsplash.com OR site:pexels.com OR site:pixabay.com OR site:commons.wikimedia.org"
-    3.  Select the best image URL based on this priority order:
-        - Priority 1: Unsplash (Direct CDN links preferred)
-        - Priority 2: Pexels
-        - Priority 3: Pixabay
-        - Priority 4: Wikimedia Commons
-    4.  EXTRACT THE DIRECT IMAGE FILE URL (ending in .jpg, .png, etc.).
-    5.  If absolutely no valid URL is found, return an empty string "".
-
-    TASK 2: SEARCH TOP RESTAURANTS
+    TASK: SEARCH TOP RESTAURANTS in "${city}"
     1. Search for the top 5 most viral, famous, or highly-rated restaurants in "${city}" right now.
-    2. Narrow this down to the top 3 best candidates based on popularity and recent positive feedback.
-    3. For each of these 3 restaurants, perform a specific search to find its details (address, phone, rating, reviews).
+    2. Narrow this down to the top 3 best candidates based on popularity.
+    3. For each of these 3 restaurants, perform a specific search to find its details (address, phone, rating, reviews, website).
 
     LANGUAGE INSTRUCTION:
     - The content of the response MUST be in ${targetLanguage}.
@@ -126,7 +132,7 @@ export const fetchTopRestaurants = async (city: string, language: LanguageCode =
     
     Structure:
     {
-      "cityImageUrl": "THE_EXTRACTED_DIRECT_IMAGE_URL",
+      "cityImageUrl": "",
       "restaurants": [
         {
           "id": "unique_string",
@@ -135,6 +141,7 @@ export const fetchTopRestaurants = async (city: string, language: LanguageCode =
           "address": "Full Address (in ${targetLanguage})",
           "phoneNumber": "Phone Number or 'N/A'",
           "mapUrl": "URL to google maps",
+          "websiteUrl": "Official website URL or null if not found",
           "rating": number (1-10),
           "reviewSummary": "A concise summary (in ${targetLanguage}, max 2 sentences).",
           "tags": ["tag1", "tag2"]
@@ -153,15 +160,10 @@ export const fetchTopRestaurants = async (city: string, language: LanguageCode =
       },
     });
 
-    // 3. Await both API Image and Gemini Data
-    // We use Promise.allSettled or just await them sequentially but initiate them early to save time.
-    // Here we await response to ensure we have data.
+    // 3. Wait for Gemini to finish text generation
     const response = await geminiPromise;
-
     const text = response.text;
-    if (!text) {
-      throw new Error("No content generated");
-    }
+    if (!text) throw new Error("No content generated");
 
     const cleanedJson = cleanJsonOutput(text);
     
@@ -170,22 +172,33 @@ export const fetchTopRestaurants = async (city: string, language: LanguageCode =
         data = JSON.parse(cleanedJson);
     } catch (parseError) {
         console.error("JSON Parse Error:", parseError);
-        console.error("Raw Text:", text);
-        throw new Error("Failed to parse data. Please try again.");
+        throw new Error("Failed to parse data.");
     }
 
-    // 4. Resolve the API Image Promise
-    const apiImage = await apiImagePromise;
-
-    // 5. Override Gemini's image if API found one (API is usually higher quality/more reliable)
-    if (apiImage) {
-        console.log("Using API Image:", apiImage);
-        data.cityImageUrl = apiImage;
+    // 4. Resolve City Image
+    const cityApiImage = await apiCityImagePromise;
+    if (cityApiImage) {
+        data.cityImageUrl = cityApiImage;
     }
 
-    // Basic validation
-    if (!data.restaurants || !Array.isArray(data.restaurants)) {
-        throw new Error("Invalid JSON structure: restaurants array missing");
+    // 5. Fetch Restaurant Images in Parallel
+    if (data.restaurants && Array.isArray(data.restaurants)) {
+        const restaurantImagePromises = data.restaurants.map(async (restaurant) => {
+            // Construct a query: Name + Cuisine + "food" to get relevant pics
+            // We append "food" or "interior" to guide the stock photo search
+            const query = `${restaurant.name} ${restaurant.cuisine} food restaurant`;
+            const imageUrl = await fetchImageFromApis(query, 'landscape');
+            
+            // Return a new object with the image URL
+            return {
+                ...restaurant,
+                imageUrl: imageUrl || undefined 
+            };
+        });
+
+        // Wait for all restaurant images to load
+        const updatedRestaurants = await Promise.all(restaurantImagePromises);
+        data.restaurants = updatedRestaurants;
     }
 
     return data;

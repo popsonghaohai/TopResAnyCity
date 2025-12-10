@@ -6,6 +6,7 @@ export interface Restaurant {
   address: string;
   phoneNumber: string;
   mapUrl: string; // Google Maps link
+  websiteUrl?: string; // Optional Official Website link
   imageUrl?: string; // Optional URL for food/restaurant image
   rating: number; // 1-10 scale
   reviewSummary: string;

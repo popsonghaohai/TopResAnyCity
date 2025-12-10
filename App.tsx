@@ -96,14 +96,28 @@ function App() {
       
       {/* ----------------- Header ----------------- */}
       <header className={`fixed top-0 left-0 right-0 z-50 ${theme.overlay} border-b ${theme.border} transition-all duration-300`}>
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 h-20 flex items-center justify-between">
             {/* Empty div for spacing balance */}
             <div className="w-10"></div>
             
-            {/* App Title */}
-            <h1 className={`text-xl md:text-2xl font-bold tracking-tight text-center ${theme.text}`}>
-              Top Res Any City
-            </h1>
+            {/* App Title with 3D Box Effect */}
+            <div className={`
+                relative px-6 py-2 rounded-xl border-b-[5px] shadow-lg transform transition-transform hover:-translate-y-0.5
+                ${currentThemeId === 'spring' ? 'bg-emerald-500 border-emerald-700' : 
+                  currentThemeId === 'ice' ? 'bg-cyan-400 border-cyan-600' : 
+                  'bg-stone-900 border-stone-600'}
+            `}>
+              <h1 
+                className="text-lg md:text-2xl font-black tracking-wider uppercase text-white"
+                style={{ 
+                  textShadow: currentThemeId === 'ice' ? '2px 2px 0px #0891b2' : 
+                              currentThemeId === 'spring' ? '2px 2px 0px #065f46' : 
+                              '2px 2px 0px #44403c'
+                }}
+              >
+                Top Res Any City
+              </h1>
+            </div>
 
             {/* Favorites Button */}
             <button 
@@ -118,7 +132,7 @@ function App() {
       </header>
 
       {/* ----------------- Main Content ----------------- */}
-      <main className="pt-24 pb-20 px-4 max-w-2xl mx-auto min-h-screen flex flex-col">
+      <main className="pt-28 pb-20 px-4 max-w-2xl mx-auto min-h-screen flex flex-col">
         
         {/* Search Bar (Only show if not viewing favorites or if browsing) */}
         {!isFavoritesOpen && (

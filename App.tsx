@@ -95,36 +95,27 @@ function App() {
     <div className={`min-h-screen transition-colors duration-700 ${theme.font} ${theme.bg} selection:bg-stone-300 selection:text-black`}>
       
       {/* ----------------- Header ----------------- */}
-      <header className={`fixed top-0 left-0 right-0 z-50 ${theme.overlay} border-b ${theme.border} transition-all duration-300`}>
+      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-orange-400 to-orange-600 border-b-[6px] border-orange-800 shadow-2xl transition-all duration-300">
         <div className="max-w-4xl mx-auto px-4 h-20 flex items-center justify-between">
             {/* Empty div for spacing balance */}
             <div className="w-10"></div>
             
-            {/* App Title with 3D Box Effect */}
-            <div className={`
-                relative px-6 py-2 rounded-xl border-b-[5px] shadow-lg transform transition-transform hover:-translate-y-0.5
-                ${currentThemeId === 'spring' ? 'bg-emerald-500 border-emerald-700' : 
-                  currentThemeId === 'ice' ? 'bg-cyan-400 border-cyan-600' : 
-                  'bg-stone-900 border-stone-600'}
-            `}>
-              <h1 
-                className="text-lg md:text-2xl font-black tracking-wider uppercase text-white"
-                style={{ 
-                  textShadow: currentThemeId === 'ice' ? '2px 2px 0px #0891b2' : 
-                              currentThemeId === 'spring' ? '2px 2px 0px #065f46' : 
-                              '2px 2px 0px #44403c'
-                }}
-              >
-                Top Res Any City
-              </h1>
-            </div>
+            {/* App Title - Full width styling implied by header bg, centered text */}
+            <h1 
+              className="text-2xl md:text-3xl font-black tracking-widest uppercase text-white transform hover:scale-105 transition-transform duration-200 cursor-default"
+              style={{ 
+                textShadow: '4px 4px 0px #9a3412' // Darker orange-800 shadow for 3D effect matching the border
+              }}
+            >
+              Top Res Any City
+            </h1>
 
             {/* Favorites Button */}
             <button 
               onClick={() => setIsFavoritesOpen(!isFavoritesOpen)}
-              className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${isFavoritesOpen ? 'bg-red-50 text-red-500' : `${theme.highlight} ${theme.accent}`}`}
+              className="w-10 h-10 flex items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95 text-white hover:bg-white/10"
             >
-              <svg className={`w-6 h-6 ${isFavoritesOpen ? 'fill-current' : 'fill-none'}`} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <svg className={`w-7 h-7 ${isFavoritesOpen ? 'fill-current' : 'fill-none'}`} stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
             </button>

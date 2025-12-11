@@ -13,6 +13,8 @@ export interface Restaurant {
   tags: string[];
 }
 
+
+
 export interface CitySearchResult {
   cityImageUrl: string;
   restaurants: Restaurant[];

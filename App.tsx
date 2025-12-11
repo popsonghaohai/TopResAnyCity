@@ -8,13 +8,14 @@ import { fetchTopRestaurants } from './services/geminiService';
 import { Restaurant, LoadingState, ThemeId, LanguageCode, ThemeConfig } from './types';
 import { themes } from './themes';
 
-// 50 Popular Food Cities - Sorted Alphabetically
+// 30 Popular Food Cities - Sorted Alphabetically
 const POPULAR_CITIES = [
-  "Amsterdam", "Athens", "Bangkok", "Barcelona", "Beijing", "Berlin", "Bologna", "Cape Town", "Chicago", "Copenhagen",
-  "Dubai", "Florence", "Guangzhou", "Hong Kong", "Istanbul", "Jakarta", "Kuala Lumpur", "Kyoto", "Las Vegas", "Lisbon",
-  "London", "Los Angeles", "Luoyang", "Lyon", "Madrid", "Melbourne", "Mexico City", "Milan", "Mumbai", "Naples",
-  "New Delhi", "New Orleans", "New York", "Osaka", "Paris", "Rome", "San Francisco", "San Sebastian", "Seoul", "Shanghai",
-  "Shenzhen", "Singapore", "Sydney", "Taipei", "Tel Aviv", "Tokyo", "Toronto", "Venice", "Vienna", "Xi'an"
+  "Amsterdam", "Athens", "Bangkok", "Barcelona", "Beijing", 
+  "Berlin", "Cape Town", "Chicago", "Copenhagen", "Dubai", 
+  "Florence", "Hong Kong", "Istanbul", "Kyoto", "Lisbon", 
+  "London", "Los Angeles", "Madrid", "Mexico City", "Mumbai", 
+  "New York", "Osaka", "Paris", "Rome", "Seoul", 
+  "Shanghai", "Singapore", "Sydney", "Tokyo", "Vienna"
 ];
 
 function App() {
@@ -157,6 +158,20 @@ function App() {
     { code: 'ja', label: '日本語 (Japanese)' },
   ];
 
+  // Split cities into 3 rows for marquee
+  const cityRows = [
+    POPULAR_CITIES.slice(0, 10),
+    POPULAR_CITIES.slice(10, 20),
+    POPULAR_CITIES.slice(20, 30),
+  ];
+
+  // Helper to determine gradient color based on theme
+  const getGradientFromColor = () => {
+    if (currentThemeId === 'ice') return 'from-slate-950';
+    if (currentThemeId === 'spring') return 'from-rose-50';
+    return 'from-stone-100'; // modern
+  };
+
   return (
     <div className={`min-h-screen transition-colors duration-700 ${theme.font} ${theme.bg} selection:bg-stone-300 selection:text-black`}>
       
@@ -190,11 +205,11 @@ function App() {
       </header>
 
       {/* ----------------- Main Content ----------------- */}
-      <main className="pt-28 pb-20 px-4 max-w-2xl mx-auto min-h-screen flex flex-col">
+      <main className="pt-24 pb-12 px-4 max-w-2xl mx-auto min-h-screen flex flex-col">
         
         {/* Search Bar (Only show if not viewing favorites or if browsing) */}
         {!isFavoritesOpen && (
-          <div className="mb-8">
+          <div className="mb-4">
             <SearchBar 
               onSearch={handleSearch} 
               isLoading={loadingState === LoadingState.LOADING}
@@ -277,35 +292,45 @@ function App() {
 
         {/* Initial Welcome State - Redesigned */}
         {!isFavoritesOpen && loadingState === LoadingState.IDLE && restaurants.length === 0 && (
-          <div className="flex flex-col items-center justify-center flex-1 mt-2 animate-fadeIn w-full">
+          <div className="flex flex-col items-center justify-center flex-1 mt-0 animate-fadeIn w-full overflow-hidden">
             
-            {/* 50 Cities Static Cloud */}
-            <div className="w-full mb-8 px-1">
-               <div className="flex flex-wrap justify-center gap-2.5">
-                 {POPULAR_CITIES.map((city) => (
-                    <button 
-                      key={city}
-                      onClick={() => handleSearch(city)}
-                      className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] md:text-xs font-bold border transition-all duration-200 ${theme.cardBg} ${theme.border} ${theme.text} hover:scale-110 hover:border-orange-400 hover:text-orange-600 shadow-sm opacity-60 hover:opacity-100 hover:z-10`}
-                    >
-                      {city}
-                    </button>
-                 ))}
-               </div>
+            {/* 30 Cities Marquee Cloud (3 Rows) */}
+            <div className="w-full mb-4 space-y-2">
+              {cityRows.map((row, rowIndex) => (
+                <div key={rowIndex} className="relative flex overflow-x-hidden group">
+                  {/* Left Fade Gradient */}
+                  <div className={`absolute inset-y-0 left-0 w-8 z-10 bg-gradient-to-r ${getGradientFromColor()} to-transparent pointer-events-none`}></div>
+                  {/* Right Fade Gradient */}
+                  <div className={`absolute inset-y-0 right-0 w-8 z-10 bg-gradient-to-l ${getGradientFromColor()} to-transparent pointer-events-none`}></div>
+
+                  {/* Scrolling Container (Duplicated content for seamless loop) */}
+                  <div className={`flex gap-2 w-max ${rowIndex % 2 === 1 ? 'animate-scroll-reverse' : 'animate-scroll'} group-hover:[animation-play-state:paused]`}>
+                    {[...row, ...row].map((city, i) => (
+                      <button 
+                        key={`${city}-${i}`}
+                        onClick={() => handleSearch(city)}
+                        className={`whitespace-nowrap px-3 py-1 rounded-full text-[11px] font-bold border transition-all duration-200 ${theme.cardBg} ${theme.border} ${theme.text} hover:scale-110 hover:border-orange-400 hover:text-orange-600 shadow-sm opacity-70 hover:opacity-100 hover:z-20`}
+                      >
+                        {city}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Text Header */}
-            <div className="text-center mb-6 z-10">
-              <span className={`text-xs font-black uppercase tracking-[0.2em] ${theme.accent} opacity-80 mb-2 block`}>
+            <div className="text-center mb-4 z-10">
+              <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme.accent} opacity-80 mb-1 block`}>
                 Explore The World
               </span>
-              <h2 className={`text-4xl md:text-5xl font-black ${theme.text} leading-tight`}>
+              <h2 className={`text-3xl md:text-4xl font-black ${theme.text} leading-tight`}>
                 Ready for Food?
               </h2>
             </div>
 
             {/* Full Width Image Banner */}
-            <div className="w-full relative h-40 md:h-56 overflow-hidden rounded-xl shadow-xl mt-4 group z-10">
+            <div className="w-full relative h-36 md:h-48 overflow-hidden rounded-xl shadow-xl mt-2 group z-10">
                <div className="absolute inset-0 flex">
                  {/* Image 1 */}
                  <div className="flex-1 h-full relative overflow-hidden">
@@ -331,15 +356,15 @@ function App() {
                
                {/* Overlay Text on Banner */}
                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                 <div className="bg-white/90 backdrop-blur px-6 py-2 rounded-full shadow-lg border border-white/50">
-                    <p className="text-xs font-bold uppercase tracking-widest text-black">
+                 <div className="bg-white/90 backdrop-blur px-5 py-1.5 rounded-full shadow-lg border border-white/50">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-black">
                        Discover Top 3 Viral Spots
                     </p>
                  </div>
                </div>
             </div>
 
-            <p className={`text-center max-w-xs text-sm ${theme.text} opacity-60 mt-8 leading-relaxed z-10`}>
+            <p className={`text-center max-w-xs text-xs ${theme.text} opacity-60 mt-4 leading-relaxed z-10`}>
               Enter a city name above to unlock its culinary secrets.
             </p>
           </div>

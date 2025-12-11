@@ -28,11 +28,21 @@
             animation: {
               'spin-slow': 'spin 3s linear infinite',
               'reverse-spin': 'reverse-spin 1s linear infinite',
+              'scroll': 'scroll 40s linear infinite',
+              'scroll-reverse': 'scroll-reverse 45s linear infinite',
             },
             keyframes: {
               'reverse-spin': {
                 from: { transform: 'rotate(360deg)' },
                 to: { transform: 'rotate(0deg)' },
+              },
+              'scroll': {
+                '0%': { transform: 'translateX(0)' },
+                '100%': { transform: 'translateX(-50%)' }, // Moves half way (assuming content is duplicated 2x)
+              },
+              'scroll-reverse': {
+                 '0%': { transform: 'translateX(-50%)' },
+                 '100%': { transform: 'translateX(0)' },
               }
             }
           }
@@ -52,6 +62,5 @@
 </head>
   <body class="bg-stone-50 text-stone-900 transition-colors duration-500">
     <div id="root"></div>
-    <script type="module" scr="/index.tsx"> </script>
   </body>
 </html>

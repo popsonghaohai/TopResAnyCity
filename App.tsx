@@ -5,8 +5,17 @@ import { LoadingView } from './components/LoadingView';
 import { ApiKeysModal } from './components/ApiKeysModal';
 import { HelpModal } from './components/HelpModal';
 import { fetchTopRestaurants } from './services/geminiService';
-import { Restaurant, LoadingState, ThemeId, LanguageCode } from './types';
+import { Restaurant, LoadingState, ThemeId, LanguageCode, ThemeConfig } from './types';
 import { themes } from './themes';
+
+// 50 Popular Food Cities - Sorted Alphabetically
+const POPULAR_CITIES = [
+  "Amsterdam", "Athens", "Bangkok", "Barcelona", "Beijing", "Berlin", "Bologna", "Cape Town", "Chicago", "Copenhagen",
+  "Dubai", "Florence", "Guangzhou", "Hong Kong", "Istanbul", "Jakarta", "Kuala Lumpur", "Kyoto", "Las Vegas", "Lisbon",
+  "London", "Los Angeles", "Luoyang", "Lyon", "Madrid", "Melbourne", "Mexico City", "Milan", "Mumbai", "Naples",
+  "New Delhi", "New Orleans", "New York", "Osaka", "Paris", "Rome", "San Francisco", "San Sebastian", "Seoul", "Shanghai",
+  "Shenzhen", "Singapore", "Sydney", "Taipei", "Tel Aviv", "Tokyo", "Toronto", "Venice", "Vienna", "Xi'an"
+];
 
 function App() {
   const [loadingState, setLoadingState] = useState<LoadingState>(LoadingState.IDLE);
@@ -14,6 +23,13 @@ function App() {
   const [cityImage, setCityImage] = useState<string>('');
   const [currentCity, setCurrentCity] = useState('');
   const [errorMsg, setErrorMsg] = useState<string>('');
+  
+  // Cache for the last successful search to support "Restore" functionality
+  const [lastSearch, setLastSearch] = useState<{
+    city: string;
+    results: Restaurant[];
+    image: string;
+  } | null>(null);
   
   // Theme State
   const [currentThemeId, setCurrentThemeId] = useState<ThemeId>('modern');
@@ -76,6 +92,14 @@ function App() {
       const { restaurants: results, cityImageUrl } = await fetchTopRestaurants(city, currentLanguage);
       setRestaurants(results);
       setCityImage(cityImageUrl);
+      
+      // Save to last search cache
+      setLastSearch({
+        city: city,
+        results: results,
+        image: cityImageUrl
+      });
+
       setLoadingState(LoadingState.SUCCESS);
     } catch (error: any) {
       setLoadingState(LoadingState.ERROR);
@@ -87,6 +111,28 @@ function App() {
       } else {
         setErrorMsg("We couldn't retrieve the culinary secrets of that city. Please try again.");
       }
+    }
+  };
+
+  // Reset to Home State
+  const handleBackToHome = () => {
+    setLoadingState(LoadingState.IDLE);
+    setRestaurants([]);
+    setCityImage('');
+    setCurrentCity('');
+    setErrorMsg('');
+    setIsFavoritesOpen(false);
+  };
+
+  // Restore Last Search State
+  const handleRestoreSearch = () => {
+    if (lastSearch) {
+      setRestaurants(lastSearch.results);
+      setCityImage(lastSearch.image);
+      setCurrentCity(lastSearch.city);
+      setLoadingState(LoadingState.SUCCESS);
+      setIsFavoritesOpen(false);
+      setErrorMsg('');
     }
   };
 
@@ -122,7 +168,8 @@ function App() {
             
             {/* App Title - Full width styling implied by header bg, centered text */}
             <h1 
-              className="text-2xl md:text-3xl font-black tracking-widest uppercase text-orange-100 transform hover:scale-105 transition-transform duration-200 cursor-default"
+              onClick={handleBackToHome}
+              className="text-2xl md:text-3xl font-black tracking-widest uppercase text-orange-100 transform hover:scale-105 transition-transform duration-200 cursor-pointer"
               style={{ 
                 textShadow: '4px 4px 0px #9a3412' // Darker orange-800 shadow for 3D effect matching the border
               }}
@@ -150,7 +197,9 @@ function App() {
           <div className="mb-8">
             <SearchBar 
               onSearch={handleSearch} 
-              isLoading={loadingState === LoadingState.LOADING} 
+              isLoading={loadingState === LoadingState.LOADING}
+              onBack={loadingState !== LoadingState.IDLE ? handleBackToHome : undefined}
+              onRestore={(loadingState === LoadingState.IDLE && lastSearch) ? handleRestoreSearch : undefined}
             />
           </div>
         )}
@@ -228,10 +277,25 @@ function App() {
 
         {/* Initial Welcome State - Redesigned */}
         {!isFavoritesOpen && loadingState === LoadingState.IDLE && restaurants.length === 0 && (
-          <div className="flex flex-col items-center justify-center flex-1 mt-4 animate-fadeIn w-full">
+          <div className="flex flex-col items-center justify-center flex-1 mt-2 animate-fadeIn w-full">
             
+            {/* 50 Cities Static Cloud */}
+            <div className="w-full mb-8 px-1">
+               <div className="flex flex-wrap justify-center gap-2.5">
+                 {POPULAR_CITIES.map((city) => (
+                    <button 
+                      key={city}
+                      onClick={() => handleSearch(city)}
+                      className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] md:text-xs font-bold border transition-all duration-200 ${theme.cardBg} ${theme.border} ${theme.text} hover:scale-110 hover:border-orange-400 hover:text-orange-600 shadow-sm opacity-60 hover:opacity-100 hover:z-10`}
+                    >
+                      {city}
+                    </button>
+                 ))}
+               </div>
+            </div>
+
             {/* Text Header */}
-            <div className="text-center mb-6">
+            <div className="text-center mb-6 z-10">
               <span className={`text-xs font-black uppercase tracking-[0.2em] ${theme.accent} opacity-80 mb-2 block`}>
                 Explore The World
               </span>
@@ -241,7 +305,7 @@ function App() {
             </div>
 
             {/* Full Width Image Banner */}
-            <div className="w-full relative h-40 md:h-56 overflow-hidden rounded-xl shadow-xl mt-4 group">
+            <div className="w-full relative h-40 md:h-56 overflow-hidden rounded-xl shadow-xl mt-4 group z-10">
                <div className="absolute inset-0 flex">
                  {/* Image 1 */}
                  <div className="flex-1 h-full relative overflow-hidden">
@@ -275,7 +339,7 @@ function App() {
                </div>
             </div>
 
-            <p className={`text-center max-w-xs text-sm ${theme.text} opacity-60 mt-8 leading-relaxed`}>
+            <p className={`text-center max-w-xs text-sm ${theme.text} opacity-60 mt-8 leading-relaxed z-10`}>
               Enter a city name above to unlock its culinary secrets.
             </p>
           </div>

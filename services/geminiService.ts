@@ -1,15 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 import { Restaurant, LanguageCode, CitySearchResult } from "../types";
 
-const apiKey = process.env.API_KEY;
-
 // --- Helper Functions ---
 
 // Generic function to fetch images from free stock API providers
 const fetchImageFromApis = async (query: string, orientation: 'landscape' | 'portrait' | 'square' = 'landscape'): Promise<string | null> => {
   // 1. Pexels API
   try {
-    // Try localStorage first (user setting), then hardcoded fallback for demo
     const userKey = localStorage.getItem('pexels_api_key');
     const pexelsApiKey = userKey || "";
     
@@ -104,8 +101,12 @@ const getLanguageName = (code: LanguageCode): string => {
 };
 
 export const fetchTopRestaurants = async (city: string, language: LanguageCode = 'en'): Promise<CitySearchResult> => {
+  // Retrieve key from localStorage (User setting) or fallback to env
+  const storedKey = localStorage.getItem('gemini_api_key');
+  const apiKey = storedKey || process.env.API_KEY;
+
   if (!apiKey) {
-    throw new Error("API Key is missing");
+    throw new Error("MISSING_API_KEY");
   }
 
   // 1. Start fetching CITY image (Parallel execution)

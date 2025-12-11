@@ -39,6 +39,19 @@ function App() {
     localStorage.setItem('favorites', JSON.stringify(favorites));
   }, [favorites]);
 
+  // Startup Check for API Key
+  useEffect(() => {
+    const checkApiKey = () => {
+      const storedKey = localStorage.getItem('gemini_api_key');
+      // If no stored key and no env key (or empty string), prompt user
+      if (!storedKey && !process.env.API_KEY) {
+        // Small delay to ensure UI is ready
+        setTimeout(() => setIsApiKeysModalOpen(true), 800);
+      }
+    };
+    checkApiKey();
+  }, []);
+
   const toggleFavorite = (restaurant: Restaurant) => {
     if (favorites.some(f => f.id === restaurant.id)) {
       setFavorites(favorites.filter(f => f.id !== restaurant.id));
@@ -64,9 +77,16 @@ function App() {
       setRestaurants(results);
       setCityImage(cityImageUrl);
       setLoadingState(LoadingState.SUCCESS);
-    } catch (error) {
+    } catch (error: any) {
       setLoadingState(LoadingState.ERROR);
-      setErrorMsg("We couldn't retrieve the culinary secrets of that city. Please try again.");
+      
+      // Handle Missing API Key Error explicitly
+      if (error.message === 'MISSING_API_KEY') {
+        setErrorMsg("Gemini API Key is missing. Please add it in settings.");
+        setIsApiKeysModalOpen(true);
+      } else {
+        setErrorMsg("We couldn't retrieve the culinary secrets of that city. Please try again.");
+      }
     }
   };
 
@@ -102,7 +122,7 @@ function App() {
             
             {/* App Title - Full width styling implied by header bg, centered text */}
             <h1 
-              className="text-2xl md:text-3xl font-black tracking-widest uppercase text-white transform hover:scale-105 transition-transform duration-200 cursor-default"
+              className="text-2xl md:text-3xl font-black tracking-widest uppercase text-orange-100 transform hover:scale-105 transition-transform duration-200 cursor-default"
               style={{ 
                 textShadow: '4px 4px 0px #9a3412' // Darker orange-800 shadow for 3D effect matching the border
               }}
@@ -113,7 +133,7 @@ function App() {
             {/* Favorites Button */}
             <button 
               onClick={() => setIsFavoritesOpen(!isFavoritesOpen)}
-              className="w-10 h-10 flex items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95 text-white hover:bg-white/10"
+              className="w-10 h-10 flex items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95 text-orange-100 hover:bg-white/10"
             >
               <svg className={`w-7 h-7 ${isFavoritesOpen ? 'fill-current' : 'fill-none'}`} stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -206,18 +226,73 @@ function App() {
           ))}
         </div>
 
-        {/* Initial Welcome State (if no search, no loading, not favorites) */}
+        {/* Initial Welcome State - Redesigned */}
         {!isFavoritesOpen && loadingState === LoadingState.IDLE && restaurants.length === 0 && (
-          <div className="flex flex-col items-center justify-center flex-1 opacity-70 mt-10">
-            <p className={`text-2xl font-bold ${theme.accent} mb-4`}>Ready to Explore?</p>
-            <p className={`text-center max-w-xs ${theme.text} opacity-80`}>Enter a city above to find the top 3 viral restaurants right now.</p>
+          <div className="flex flex-col items-center justify-center flex-1 mt-4 animate-fadeIn w-full">
+            
+            {/* Text Header */}
+            <div className="text-center mb-6">
+              <span className={`text-xs font-black uppercase tracking-[0.2em] ${theme.accent} opacity-80 mb-2 block`}>
+                Explore The World
+              </span>
+              <h2 className={`text-4xl md:text-5xl font-black ${theme.text} leading-tight`}>
+                Ready for Food?
+              </h2>
+            </div>
+
+            {/* Full Width Image Banner */}
+            <div className="w-full relative h-40 md:h-56 overflow-hidden rounded-xl shadow-xl mt-4 group">
+               <div className="absolute inset-0 flex">
+                 {/* Image 1 */}
+                 <div className="flex-1 h-full relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80" alt="Food 1" className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-black/10"></div>
+                 </div>
+                 {/* Image 2 */}
+                 <div className="flex-1 h-full relative overflow-hidden hidden md:block">
+                    <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=400&q=80" alt="Food 2" className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-black/10"></div>
+                 </div>
+                 {/* Image 3 */}
+                 <div className="flex-1 h-full relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=400&q=80" alt="Food 3" className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-black/10"></div>
+                 </div>
+                  {/* Image 4 */}
+                  <div className="flex-1 h-full relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=400&q=80" alt="Food 4" className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-black/10"></div>
+                 </div>
+               </div>
+               
+               {/* Overlay Text on Banner */}
+               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                 <div className="bg-white/90 backdrop-blur px-6 py-2 rounded-full shadow-lg border border-white/50">
+                    <p className="text-xs font-bold uppercase tracking-widest text-black">
+                       Discover Top 3 Viral Spots
+                    </p>
+                 </div>
+               </div>
+            </div>
+
+            <p className={`text-center max-w-xs text-sm ${theme.text} opacity-60 mt-8 leading-relaxed`}>
+              Enter a city name above to unlock its culinary secrets.
+            </p>
           </div>
         )}
 
         {/* Error State */}
         {!isFavoritesOpen && loadingState === LoadingState.ERROR && (
-           <div className={`p-6 border ${theme.border} ${theme.highlight} text-center`}>
-              <p className={theme.text}>{errorMsg}</p>
+           <div className={`mt-4 p-6 border ${theme.border} ${theme.highlight} text-center rounded-lg animate-fadeIn`}>
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-red-100 text-red-500 mb-3">
+                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              </div>
+              <p className={`font-medium ${theme.text}`}>{errorMsg}</p>
+              {errorMsg.includes("Gemini API Key") && (
+                 <button onClick={() => setIsApiKeysModalOpen(true)} className="mt-3 text-sm font-bold text-orange-600 hover:underline">
+                    Open Settings
+                 </button>
+              )}
            </div>
         )}
 

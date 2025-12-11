@@ -8,18 +8,21 @@ interface ApiKeysModalProps {
 }
 
 export const ApiKeysModal: React.FC<ApiKeysModalProps> = ({ isOpen, onClose, theme }) => {
+  const [geminiKey, setGeminiKey] = useState('');
   const [pexelsKey, setPexelsKey] = useState('');
   const [pixabayKey, setPixabayKey] = useState('');
 
   // Load keys from localStorage when modal opens
   useEffect(() => {
     if (isOpen) {
+      setGeminiKey(localStorage.getItem('gemini_api_key') || '');
       setPexelsKey(localStorage.getItem('pexels_api_key') || '');
       setPixabayKey(localStorage.getItem('pixabay_api_key') || '');
     }
   }, [isOpen]);
 
   const handleSave = () => {
+    localStorage.setItem('gemini_api_key', geminiKey.trim());
     localStorage.setItem('pexels_api_key', pexelsKey.trim());
     localStorage.setItem('pixabay_api_key', pixabayKey.trim());
     onClose();
@@ -41,13 +44,38 @@ export const ApiKeysModal: React.FC<ApiKeysModalProps> = ({ isOpen, onClose, the
         {/* Content */}
         <div className="p-6 space-y-6">
           <p className={`text-sm ${theme.text} opacity-70 leading-relaxed`}>
-            Enter your own API keys to ensure consistent high-quality image results. Keys are stored locally on your device.
+            Enter your API keys below. Keys are stored securely on your local device.
           </p>
+
+          {/* Gemini Section (Primary) */}
+          <div className="space-y-2 p-3 rounded-lg bg-orange-50/50 border border-orange-100">
+            <div className="flex justify-between items-center">
+              <label className={`block text-xs font-bold uppercase tracking-wider text-orange-800`}>Gemini API Key (Required)</label>
+              <a 
+                href="https://aistudio.google.com/app/apikey" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className={`text-xs flex items-center gap-1 hover:underline font-medium transition-opacity hover:opacity-80 text-orange-600`}
+              >
+                Get Key
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+              </a>
+            </div>
+            <input 
+              type="text" 
+              value={geminiKey}
+              onChange={(e) => setGeminiKey(e.target.value)}
+              placeholder="Ex: AIzaSy..."
+              className={`w-full p-3 rounded-lg border ${theme.border} bg-white ${theme.text} focus:ring-2 focus:ring-orange-500/50 outline-none transition-all placeholder:opacity-30`}
+            />
+          </div>
+
+          <div className="h-px bg-gray-200"></div>
 
           {/* Pexels Section */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <label className={`block text-xs font-bold uppercase tracking-wider ${theme.text} opacity-60`}>Pexels API Key</label>
+              <label className={`block text-xs font-bold uppercase tracking-wider ${theme.text} opacity-60`}>Pexels API Key (Optional)</label>
               <a 
                 href="https://www.pexels.com/api/" 
                 target="_blank" 
@@ -71,7 +99,7 @@ export const ApiKeysModal: React.FC<ApiKeysModalProps> = ({ isOpen, onClose, the
           {/* Pixabay Section */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <label className={`block text-xs font-bold uppercase tracking-wider ${theme.text} opacity-60`}>Pixabay API Key</label>
+              <label className={`block text-xs font-bold uppercase tracking-wider ${theme.text} opacity-60`}>Pixabay API Key (Optional)</label>
               <a 
                 href="https://pixabay.com/api/docs/" 
                 target="_blank" 

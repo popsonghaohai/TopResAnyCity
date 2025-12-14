@@ -44,6 +44,11 @@ function App() {
   const [isApiKeysModalOpen, setIsApiKeysModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
+  // Check if API Key exists in localStorage
+  const [hasApiKey, setHasApiKey] = useState<boolean>(() => {
+    return !!localStorage.getItem('gemini_api_key');
+  });
+
   // Favorites State
   const [favorites, setFavorites] = useState<Restaurant[]>(() => {
     const saved = localStorage.getItem('favorites');
@@ -57,17 +62,13 @@ function App() {
   }, [favorites]);
 
   // Startup Check for API Key
+  // If no key is found, force the modal open
   useEffect(() => {
-    const checkApiKey = () => {
-      const storedKey = localStorage.getItem('gemini_api_key');
-      // If no stored key and no env key (or empty string), prompt user
-      if (!storedKey && !process.env.API_KEY) {
-        // Small delay to ensure UI is ready
-        setTimeout(() => setIsApiKeysModalOpen(true), 800);
-      }
-    };
-    checkApiKey();
-  }, []);
+    if (!hasApiKey) {
+      // Small delay for smoother UX on load
+      setTimeout(() => setIsApiKeysModalOpen(true), 500);
+    }
+  }, [hasApiKey]);
 
   const toggleFavorite = (restaurant: Restaurant) => {
     if (favorites.some(f => f.id === restaurant.id)) {
@@ -81,6 +82,12 @@ function App() {
   const handleSearch = async (city: string) => {
     if (!city) return;
     
+    // Double check key existence before searching
+    if (!hasApiKey) {
+      setIsApiKeysModalOpen(true);
+      return;
+    }
+
     setLoadingState(LoadingState.LOADING);
     setRestaurants([]); 
     setCityImage('');
@@ -108,6 +115,7 @@ function App() {
       // Handle Missing API Key Error explicitly
       if (error.message === 'MISSING_API_KEY') {
         setErrorMsg("Gemini API Key is missing. Please add it in settings.");
+        setHasApiKey(false); // Reset state
         setIsApiKeysModalOpen(true);
       } else {
         setErrorMsg("We couldn't retrieve the culinary secrets of that city. Please try again.");
@@ -397,6 +405,8 @@ function App() {
         isOpen={isApiKeysModalOpen} 
         onClose={() => setIsApiKeysModalOpen(false)} 
         theme={theme} 
+        forceInput={!hasApiKey} 
+        onKeysSaved={() => setHasApiKey(true)}
       />
 
       {/* ----------------- Help Modal ----------------- */}

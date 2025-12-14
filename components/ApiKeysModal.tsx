@@ -5,9 +5,11 @@ interface ApiKeysModalProps {
   isOpen: boolean;
   onClose: () => void;
   theme: ThemeConfig;
+  forceInput?: boolean;     // If true, user cannot close modal without saving a key
+  onKeysSaved?: () => void; // Callback when keys are successfully saved
 }
 
-export const ApiKeysModal: React.FC<ApiKeysModalProps> = ({ isOpen, onClose, theme }) => {
+export const ApiKeysModal: React.FC<ApiKeysModalProps> = ({ isOpen, onClose, theme, forceInput = false, onKeysSaved }) => {
   const [geminiKey, setGeminiKey] = useState('');
   const [pexelsKey, setPexelsKey] = useState('');
   const [pixabayKey, setPixabayKey] = useState('');
@@ -22,29 +24,45 @@ export const ApiKeysModal: React.FC<ApiKeysModalProps> = ({ isOpen, onClose, the
   }, [isOpen]);
 
   const handleSave = () => {
+    // Strict validation for Gemini Key
+    if (!geminiKey.trim()) {
+       alert("A Gemini API Key is required to use this application.\n\nPlease get a free key from Google AI Studio.");
+       return;
+    }
+
     localStorage.setItem('gemini_api_key', geminiKey.trim());
     localStorage.setItem('pexels_api_key', pexelsKey.trim());
     localStorage.setItem('pixabay_api_key', pixabayKey.trim());
+    
+    if (onKeysSaved) {
+        onKeysSaved();
+    }
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
       <div className={`w-full max-w-md ${theme.cardBg} rounded-xl shadow-2xl overflow-hidden border ${theme.border} transform transition-all`}>
         {/* Header */}
         <div className={`px-6 py-4 border-b ${theme.border} flex justify-between items-center ${theme.highlight}`}>
-          <h3 className={`font-bold ${theme.text}`}>API Key Configuration</h3>
-          <button onClick={onClose} className={`p-1 rounded-full hover:bg-black/10 transition-colors ${theme.text}`}>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
+          <h3 className={`font-bold ${theme.text}`}>
+            {forceInput ? "Welcome! Setup Required" : "API Key Configuration"}
+          </h3>
+          {!forceInput && (
+            <button onClick={onClose} className={`p-1 rounded-full hover:bg-black/10 transition-colors ${theme.text}`}>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          )}
         </div>
         
         {/* Content */}
         <div className="p-6 space-y-6">
           <p className={`text-sm ${theme.text} opacity-70 leading-relaxed`}>
-            Enter your API keys below. Keys are stored securely on your local device.
+            {forceInput 
+              ? "To start discovering global flavors, please enter your personal Gemini API Key below. This ensures you have full control over your usage." 
+              : "Enter your API keys below. Keys are stored securely on your local device."}
           </p>
 
           {/* Gemini Section (Primary) */}
@@ -57,7 +75,7 @@ export const ApiKeysModal: React.FC<ApiKeysModalProps> = ({ isOpen, onClose, the
                 rel="noopener noreferrer"
                 className={`text-xs flex items-center gap-1 hover:underline font-medium transition-opacity hover:opacity-80 text-orange-600`}
               >
-                Get Key
+                Get Free Key
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
               </a>
             </div>
@@ -123,17 +141,19 @@ export const ApiKeysModal: React.FC<ApiKeysModalProps> = ({ isOpen, onClose, the
 
         {/* Footer */}
         <div className={`px-6 py-4 border-t ${theme.border} flex justify-end gap-3 ${theme.highlight}`}>
-          <button 
-            onClick={onClose}
-            className={`px-4 py-2 rounded-lg text-sm font-medium opacity-70 hover:opacity-100 transition-opacity ${theme.text}`}
-          >
-            Cancel
-          </button>
+          {!forceInput && (
+            <button 
+                onClick={onClose}
+                className={`px-4 py-2 rounded-lg text-sm font-medium opacity-70 hover:opacity-100 transition-opacity ${theme.text}`}
+            >
+                Cancel
+            </button>
+          )}
           <button 
             onClick={handleSave}
             className={`px-6 py-2 rounded-lg text-sm font-bold shadow-md transform active:scale-95 transition-all ${theme.button} ${theme.buttonText}`}
           >
-            Save Keys
+            {forceInput ? "Start Exploring" : "Save Keys"}
           </button>
         </div>
       </div>

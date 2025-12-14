@@ -101,9 +101,9 @@ const getLanguageName = (code: LanguageCode): string => {
 };
 
 export const fetchTopRestaurants = async (city: string, language: LanguageCode = 'en'): Promise<CitySearchResult> => {
-  // Retrieve key from localStorage (User setting) or fallback to env
-  const storedKey = localStorage.getItem('gemini_api_key');
-  const apiKey = storedKey || process.env.API_KEY;
+  // Retrieve key from localStorage (User setting) ONLY
+  // We strictly require the user to provide their own key to avoid sharing developer keys.
+  const apiKey = localStorage.getItem('gemini_api_key');
 
   if (!apiKey) {
     throw new Error("MISSING_API_KEY");

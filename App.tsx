@@ -185,7 +185,8 @@ function App() {
     <div className={`min-h-screen transition-colors duration-700 ${theme.font} ${theme.bg} selection:bg-stone-300 selection:text-black`}>
       
       {/* ----------------- Header ----------------- */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-orange-400 to-orange-600 border-b-[6px] border-orange-800 shadow-2xl transition-all duration-300">
+      {/* Added pt-[env(safe-area-inset-top)] to handle Mobile Notches/Status Bars */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-orange-400 to-orange-600 border-b-[6px] border-orange-800 shadow-2xl transition-all duration-300 pt-[env(safe-area-inset-top)]">
         <div className="max-w-4xl mx-auto px-4 h-20 flex items-center justify-between">
             {/* Empty div for spacing balance */}
             <div className="w-10"></div>
@@ -214,7 +215,8 @@ function App() {
       </header>
 
       {/* ----------------- Main Content ----------------- */}
-      <main className="pt-24 pb-12 px-4 max-w-2xl mx-auto min-h-screen flex flex-col">
+      {/* Adjusted top padding to account for header + safe area */}
+      <main className="pt-[calc(6rem+env(safe-area-inset-top))] pb-12 px-4 max-w-2xl mx-auto min-h-screen flex flex-col">
         
         {/* Search Bar (Only show if not viewing favorites or if browsing) */}
         {!isFavoritesOpen && (

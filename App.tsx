@@ -7,6 +7,7 @@ import { HelpModal } from './components/HelpModal';
 import { fetchTopRestaurants } from './services/geminiService';
 import { Restaurant, LoadingState, ThemeId, LanguageCode, ThemeConfig } from './types';
 import { themes } from './themes';
+import { storageService, STORAGE_KEYS } from './services/storageService';
 
 // 30 Popular Food Cities - Sorted Alphabetically
 const POPULAR_CITIES = [
@@ -44,21 +45,21 @@ function App() {
   const [isApiKeysModalOpen, setIsApiKeysModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
-  // Check if API Key exists in localStorage
+  // Check if API Key exists in storage
   const [hasApiKey, setHasApiKey] = useState<boolean>(() => {
-    return !!localStorage.getItem('gemini_api_key');
+    return !!storageService.getApiKey(STORAGE_KEYS.GEMINI_KEY);
   });
 
   // Favorites State
   const [favorites, setFavorites] = useState<Restaurant[]>(() => {
-    const saved = localStorage.getItem('favorites');
+    const saved = storageService.getItem(STORAGE_KEYS.FAVORITES);
     return saved ? JSON.parse(saved) : [];
   });
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
 
   // Persist Favorites
   useEffect(() => {
-    localStorage.setItem('favorites', JSON.stringify(favorites));
+    storageService.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(favorites));
   }, [favorites]);
 
   // Startup Check for API Key

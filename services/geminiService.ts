@@ -1,6 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
 import { Restaurant, LanguageCode, CitySearchResult } from "../types";
-import { storageService, STORAGE_KEYS } from "./storageService";
 
 // --- Helper Functions ---
 
@@ -8,7 +7,8 @@ import { storageService, STORAGE_KEYS } from "./storageService";
 const fetchImageFromApis = async (query: string, orientation: 'landscape' | 'portrait' | 'square' = 'landscape'): Promise<string | null> => {
   // 1. Pexels API
   try {
-    const pexelsApiKey = storageService.getApiKey(STORAGE_KEYS.PEXELS_KEY);
+    const userKey = localStorage.getItem('pexels_api_key');
+    const pexelsApiKey = userKey || "";
     
     if (pexelsApiKey) {
       const response = await fetch(
@@ -33,7 +33,8 @@ const fetchImageFromApis = async (query: string, orientation: 'landscape' | 'por
 
   // 2. Pixabay API
   try {
-    const pixabayApiKey = storageService.getApiKey(STORAGE_KEYS.PIXABAY_KEY);
+    const userKey = localStorage.getItem('pixabay_api_key');
+    const pixabayApiKey = userKey || "";
     
     if (pixabayApiKey) {
       const response = await fetch(
@@ -100,8 +101,9 @@ const getLanguageName = (code: LanguageCode): string => {
 };
 
 export const fetchTopRestaurants = async (city: string, language: LanguageCode = 'en'): Promise<CitySearchResult> => {
-  // Retrieve key from storageService
-  const apiKey = storageService.getApiKey(STORAGE_KEYS.GEMINI_KEY);
+  // Retrieve key from localStorage (User setting) ONLY
+  // We strictly require the user to provide their own key to avoid sharing developer keys.
+  const apiKey = localStorage.getItem('gemini_api_key');
 
   if (!apiKey) {
     throw new Error("MISSING_API_KEY");

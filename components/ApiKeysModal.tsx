@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { ThemeConfig } from '../types';
-import { storageService, STORAGE_KEYS } from '../services/storageService';
 
 interface ApiKeysModalProps {
   isOpen: boolean;
@@ -20,12 +19,12 @@ export const ApiKeysModal: React.FC<ApiKeysModalProps> = ({ isOpen, onClose, the
   const [showPexels, setShowPexels] = useState(false);
   const [showPixabay, setShowPixabay] = useState(false);
 
-  // Load keys from storageService when modal opens
+  // Load keys from localStorage when modal opens
   useEffect(() => {
     if (isOpen) {
-      setGeminiKey(storageService.getApiKey(STORAGE_KEYS.GEMINI_KEY));
-      setPexelsKey(storageService.getApiKey(STORAGE_KEYS.PEXELS_KEY));
-      setPixabayKey(storageService.getApiKey(STORAGE_KEYS.PIXABAY_KEY));
+      setGeminiKey(localStorage.getItem('gemini_api_key') || '');
+      setPexelsKey(localStorage.getItem('pexels_api_key') || '');
+      setPixabayKey(localStorage.getItem('pixabay_api_key') || '');
       // Reset visibility on open
       setShowGemini(false);
       setShowPexels(false);
@@ -40,9 +39,9 @@ export const ApiKeysModal: React.FC<ApiKeysModalProps> = ({ isOpen, onClose, the
        return;
     }
 
-    storageService.saveApiKey(STORAGE_KEYS.GEMINI_KEY, geminiKey.trim());
-    storageService.saveApiKey(STORAGE_KEYS.PEXELS_KEY, pexelsKey.trim());
-    storageService.saveApiKey(STORAGE_KEYS.PIXABAY_KEY, pixabayKey.trim());
+    localStorage.setItem('gemini_api_key', geminiKey.trim());
+    localStorage.setItem('pexels_api_key', pexelsKey.trim());
+    localStorage.setItem('pixabay_api_key', pixabayKey.trim());
     
     if (onKeysSaved) {
         onKeysSaved();

@@ -7,7 +7,6 @@ import { HelpModal } from './components/HelpModal';
 import { fetchTopRestaurants } from './services/geminiService';
 import { Restaurant, LoadingState, ThemeId, LanguageCode, ThemeConfig } from './types';
 import { themes } from './themes';
-import { storageService, STORAGE_KEYS } from './services/storageService';
 
 // 30 Popular Food Cities - Sorted Alphabetically
 const POPULAR_CITIES = [
@@ -45,21 +44,21 @@ function App() {
   const [isApiKeysModalOpen, setIsApiKeysModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
-  // Check if API Key exists in storage
+  // Check if API Key exists in localStorage
   const [hasApiKey, setHasApiKey] = useState<boolean>(() => {
-    return !!storageService.getApiKey(STORAGE_KEYS.GEMINI_KEY);
+    return !!localStorage.getItem('gemini_api_key');
   });
 
   // Favorites State
   const [favorites, setFavorites] = useState<Restaurant[]>(() => {
-    const saved = storageService.getItem(STORAGE_KEYS.FAVORITES);
+    const saved = localStorage.getItem('favorites');
     return saved ? JSON.parse(saved) : [];
   });
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
 
   // Persist Favorites
   useEffect(() => {
-    storageService.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(favorites));
+    localStorage.setItem('favorites', JSON.stringify(favorites));
   }, [favorites]);
 
   // Startup Check for API Key
@@ -185,8 +184,7 @@ function App() {
     <div className={`min-h-screen transition-colors duration-700 ${theme.font} ${theme.bg} selection:bg-stone-300 selection:text-black`}>
       
       {/* ----------------- Header ----------------- */}
-      {/* Added pt-[env(safe-area-inset-top)] to handle Mobile Notches/Status Bars */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-orange-400 to-orange-600 border-b-[6px] border-orange-800 shadow-2xl transition-all duration-300 pt-[env(safe-area-inset-top)]">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-orange-400 to-orange-600 border-b-[6px] border-orange-800 shadow-2xl transition-all duration-300">
         <div className="max-w-4xl mx-auto px-4 h-20 flex items-center justify-between">
             {/* Empty div for spacing balance */}
             <div className="w-10"></div>
@@ -215,8 +213,7 @@ function App() {
       </header>
 
       {/* ----------------- Main Content ----------------- */}
-      {/* Adjusted top padding to account for header + safe area */}
-      <main className="pt-[calc(6rem+env(safe-area-inset-top))] pb-12 px-4 max-w-2xl mx-auto min-h-screen flex flex-col">
+      <main className="pt-24 pb-12 px-4 max-w-2xl mx-auto min-h-screen flex flex-col">
         
         {/* Search Bar (Only show if not viewing favorites or if browsing) */}
         {!isFavoritesOpen && (
